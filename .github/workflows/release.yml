@@ -1,3 +1,5 @@
+name: Release
+
 on:
   push:
     tags: ["*"]
@@ -20,18 +22,39 @@ jobs:
         with:
           node-version: 20
 
+      # -------------------------
+      # Linux setup
+      # -------------------------
       - name: apt-update
-        if: startsWith(matrix.os, 'ubuntu-latest')
+        if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt-get update
 
       - name: autoremove
-        if: startsWith(matrix.os, 'ubuntu-latest')
+        if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt autoremove
 
       - name: Install libarchive rpm on Linux
-        if: startsWith(matrix.os, 'ubuntu-latest')
+        if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt-get install libarchive-tools rpm
 
+      # -------------------------
+      # macOS setup (fix for node-gyp + distutils)
+      # -------------------------
+      - name: Setup Python for node-gyp
+        if: startsWith(matrix.os, 'macos')
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools for macOS
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install pkg-config cairo pango libpng jpeg giflib librsvg
+          npm install -g node-gyp
+
+      # -------------------------
+      # Release step
+      # -------------------------
       - name: Release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
